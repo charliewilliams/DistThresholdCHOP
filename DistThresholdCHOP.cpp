@@ -5,37 +5,32 @@
 #include <math.h>
 #include <assert.h>
 #include <cmath>
+#include <chrono>
 
+#define LARGE_INTEGER int64_t
+
+using namespace std::chrono;
 
 double GetSeconds()
 {
-	static LARGE_INTEGER lastTime;
-	static LARGE_INTEGER freq;
-	static bool first = true;
-
-
-	if (first)
-	{
-		QueryPerformanceCounter(&lastTime);
-		QueryPerformanceFrequency(&freq);
-
-		first = false;
-	}
-
-	static double time = 0.0;
-
-	LARGE_INTEGER t;
-	QueryPerformanceCounter(&t);
-
-	__int64 delta = t.QuadPart - lastTime.QuadPart;
-	double deltaSeconds = double(delta) / double(freq.QuadPart);
-
-	time += deltaSeconds;
-
-	lastTime = t;
-
-	return time;
-
+    static high_resolution_clock::time_point lastTime;
+    static bool first = true;
+    
+    if (first)
+    {
+        lastTime = high_resolution_clock::now();
+        first = false;
+    }
+    
+    static double time = 0.0;
+    
+    auto t = high_resolution_clock::now();
+    duration<double> delta = t - lastTime;
+    
+    time += delta.count();
+    lastTime = t;
+    
+    return time;
 }
 
 // These functions are basic C function, which the DLL loader can find
@@ -313,7 +308,8 @@ DistThresholdCHOP::getInfoDATEntries(int32_t index, int32_t nEntries, OP_InfoDAT
 		entries->values[0]->setString("executeCount");
 
 		// Set the value for the second column
-		sprintf(tempBuffer2, "%d", myExecuteCount);
+//		sprintf(tempBuffer2, "%d", myExecuteCount);
+        snprintf(tempBuffer2, sizeof(tempBuffer2), "%d", myExecuteCount);
 		entries->values[1]->setString(tempBuffer2);
 	}
 }
